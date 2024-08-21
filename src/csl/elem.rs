@@ -372,6 +372,8 @@ pub enum BufWriteFormat {
     VT100,
     /// Write HTML.
     Html,
+    /// Write Typst markup.
+    Typst,
 }
 
 /// A piece of formatted text.
@@ -477,6 +479,34 @@ impl Formatting {
         Ok(())
     }
 
+    pub(super) fn write_typst(&self, buf: &mut impl fmt::Write) -> Result<(), fmt::Error> {
+        if self.font_style == FontStyle::Italic {
+            buf.write_str("#emph[")?;
+        }
+
+        match self.font_weight {
+            FontWeight::Bold => buf.write_str("#strong[")?,
+            FontWeight::Light => buf.write_str("#text(weight: \"light\")[")?,
+            _ => {}
+        }
+
+        if self.text_decoration == TextDecoration::Underline {
+            buf.write_str("#underline[")?;
+        }
+
+        if self.font_variant == FontVariant::SmallCaps {
+            buf.write_str("#smallcaps[")?;
+        }
+
+        match self.vertical_align {
+            VerticalAlign::Sub => buf.write_str("#sub[")?,
+            VerticalAlign::Sup => buf.write_str("#super[")?,
+            _ => {}
+        }
+
+        Ok(())
+    }
+
     pub(super) fn write_start(
         &self,
         buf: &mut impl fmt::Write,
@@ -493,7 +523,14 @@ impl Formatting {
                     buf.write_str("\">")?;
                 }
                 Ok(())
-            }
+            },
+            BufWriteFormat::Typst => {
+                let is_default = self == &Formatting::default();
+                if !is_default {
+                    self.write_typst(buf)?;
+                }
+                Ok(())
+            },
         }
     }
 
@@ -511,6 +548,21 @@ impl Formatting {
                     buf.write_str("</span>")?;
                 }
                 Ok(())
+            },
+            BufWriteFormat::Typst => {
+                let closing_brackets = [
+                    self.font_style == FontStyle::Italic,
+                    self.font_weight != FontWeight::Normal,
+                    self.text_decoration == TextDecoration::Underline,
+                    self.font_variant == FontVariant::SmallCaps,
+                    matches!(self.vertical_align, VerticalAlign::Sub | VerticalAlign::Sup)
+                ];
+
+                for _ in closing_brackets.iter().filter(|x| **x) {
+                    buf.write_str("]")?;
+                }
+
+                Ok(())   
             }
         }
     }
