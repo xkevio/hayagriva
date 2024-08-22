@@ -559,7 +559,7 @@ impl Formatting {
                 ];
 
                 for _ in closing_brackets.iter().filter(|x| **x) {
-                    buf.write_str("]")?;
+                    buf.write_str("];")?;
                 }
 
                 Ok(())   
