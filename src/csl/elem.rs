@@ -479,7 +479,10 @@ impl Formatting {
         Ok(())
     }
 
-    pub(super) fn write_typst(&self, buf: &mut impl fmt::Write) -> Result<(), fmt::Error> {
+    pub(super) fn write_typst(
+        &self,
+        buf: &mut impl fmt::Write,
+    ) -> Result<(), fmt::Error> {
         if self.font_style == FontStyle::Italic {
             buf.write_str("#emph[")?;
         }
@@ -523,14 +526,14 @@ impl Formatting {
                     buf.write_str("\">")?;
                 }
                 Ok(())
-            },
+            }
             BufWriteFormat::Typst => {
                 let is_default = self == &Formatting::default();
                 if !is_default {
                     self.write_typst(buf)?;
                 }
                 Ok(())
-            },
+            }
         }
     }
 
@@ -548,21 +551,24 @@ impl Formatting {
                     buf.write_str("</span>")?;
                 }
                 Ok(())
-            },
+            }
             BufWriteFormat::Typst => {
                 let closing_brackets = [
                     self.font_style == FontStyle::Italic,
                     self.font_weight != FontWeight::Normal,
                     self.text_decoration == TextDecoration::Underline,
                     self.font_variant == FontVariant::SmallCaps,
-                    matches!(self.vertical_align, VerticalAlign::Sub | VerticalAlign::Sup)
+                    matches!(
+                        self.vertical_align,
+                        VerticalAlign::Sub | VerticalAlign::Sup
+                    ),
                 ];
 
                 for _ in closing_brackets.iter().filter(|x| **x) {
                     buf.write_str("];")?;
                 }
 
-                Ok(())   
+                Ok(())
             }
         }
     }
